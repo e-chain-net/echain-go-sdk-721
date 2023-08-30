@@ -1,21 +1,16 @@
 package tx
 
 import (
+	"crypto/ecdsa"
 	"encoding/binary"
-	//ecdsa2 "crypto/ecdsa"
-	"encoding/hex"
 	"fmt"
 	"github.com/TarsCloud/TarsGo/tars/protocol/codec"
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
-	//"github.com/ethereum/go-ethereum/crypto"
-	"github.com/e-chain-net/echain-go-sdk-721/internal/crypto"
+	"github.com/e-chain-net/echain-go-sdk-721/tars-protocol/bcostars"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/holiman/uint256"
 	"math/rand"
-	//"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/e-chain-net/echain-go-sdk-721/internal/common"
-	"github.com/e-chain-net/echain-go-sdk-721/internal/common/hexutil"
-	"github.com/e-chain-net/echain-go-sdk-721/tars-protocol/bcostars"
 	"strings"
 	"time"
 )
@@ -111,26 +106,15 @@ func PrivateKeyToAddress(privateKey string) (string, error) {
 		return "", err
 	}
 
-	//// 获取公钥并去除头部0x04
-	//compressed := privKey.PubKey().SerializeUncompressed()[1:]
-	//fmt.Printf("公钥为x: %s\n", hex.EncodeToString(compressed))
-
 	//// 获取地址
-	addr := crypto.PubkeyToAddress(*privKey.PubKey())
+	addr := crypto.PubkeyToAddress(privKey.PublicKey)
 	//fmt.Printf("地址为: %s\n", addr.Hex())
 
 	return addr.Hex(), nil
 }
 
-func ParseKeyPairFromPrivateKey(privateKey string) (*secp256k1.PrivateKey, error) {
-	// Decode a hex-encoded private key.
-	pkBytes, err := hex.DecodeString(privateKey)
-	if err != nil {
-		return nil, err
-	}
-	privKey := secp256k1.PrivKeyFromBytes(pkBytes)
-
-	return privKey, nil
+func ParseKeyPairFromPrivateKey(privateKey string) (*ecdsa.PrivateKey, error) {
+	return crypto.HexToECDSA(privateKey)
 }
 
 func SignTransactionDataHash(privateKey string, txDataHash string) (string, error) {
@@ -140,10 +124,16 @@ func SignTransactionDataHash(privateKey string, txDataHash string) (string, erro
 	}
 
 	//Sign a message using the private key.
-	messageHash := txDataHash
-	signature := ecdsa.Sign(privKey, []byte(messageHash))
+	hash,err := hexutil.Decode(txDataHash)
+	if err != nil {
+		return "",err
+	}
 
-	return hexutil.Encode(signature.Serialize()), nil
+	signature,err := crypto.Sign(hash,privKey)
+	if err != nil{
+		return "",err
+	}
+	return hexutil.Encode(signature),nil
 }
 
 func CreateTransaction(from string, txData *bcostars.TransactionData, txDataHash string, signedTxDataHash string, attribute int32) (*bcostars.Transaction, error) {
@@ -154,7 +144,7 @@ func CreateTransaction(from string, txData *bcostars.TransactionData, txDataHash
 		ImportTime: 0,
 		Attribute:  attribute,
 		ExtraData:  "",
-		Sender:     HexByte2Int8(common.FromHex(strings.ToLower(from))),
+		//Sender:     HexByte2Int8(common.FromHex(strings.ToLower(from))),
 	}, nil
 }
 func EncodeTransaction(tx *bcostars.Transaction) (string, error) {
