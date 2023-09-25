@@ -110,7 +110,7 @@ func PrivateKeyToAddress(privateKey string) (string, error) {
 	addr := crypto.PubkeyToAddress(privKey.PublicKey)
 	//fmt.Printf("地址为: %s\n", addr.Hex())
 
-	return addr.Hex(), nil
+	return strings.ToLower(addr.Hex()), nil
 }
 
 func ParseKeyPairFromPrivateKey(privateKey string) (*ecdsa.PrivateKey, error) {

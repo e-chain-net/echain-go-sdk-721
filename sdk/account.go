@@ -2,10 +2,10 @@ package sdk
 
 import (
 	"crypto/ecdsa"
-	"crypto/elliptic"
 	"crypto/rand"
 	"encoding/hex"
 	"github.com/e-chain-net/echain-go-sdk-721/tx"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 type Account struct{
@@ -15,7 +15,7 @@ type Account struct{
 
 
 func NewAccount() Account{
-	privKey, _ := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	privKey, _ := ecdsa.GenerateKey(crypto.S256(), rand.Reader)
 
 	// Convert the private key to a 32-byte hexadecimal string
 	privBytes := privKey.D.Bytes()
